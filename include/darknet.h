@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <math.h>
+#include <execinfo.h>
+
 
 #ifdef GPU
     #define BLOCK 512
@@ -798,6 +801,36 @@ int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
 float rand_normal();
 float rand_uniform(float min, float max);
+void ChienComputeLossAtEndOfEpoch(network *net, load_args args,pthread_t *load_thread,const int N,const int m_val, char **paths_val, float *pLossTrain, float *pLossVal, const int epoch);
+void Chien_print_trace (void);
+
+
+void Call_C_Side_Allocation(unsigned char NumberCamera, network *net);
+void CopyToPointerTemp(image *InputData, unsigned char i);
+void PassIndexCamera(int i);
+void PredictMuliFrames(network *net);
+void FreeMemory();
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m \n"
+
+
+#ifdef DEBUG
+	// #define Debug(...)    printf(ANSI_COLOR_RED __VA_ARGS__ ); printf(ANSI_COLOR_RESET)
+	#define Debug(...)    printf(ANSI_COLOR_GREEN); printf(__VA_ARGS__); printf(ANSI_COLOR_RESET);
+	#define Debug_R(...)    printf(ANSI_COLOR_RED); printf(__VA_ARGS__); printf(ANSI_COLOR_RESET);
+	#define Debug_Y(...)    printf(ANSI_COLOR_YELLOW); printf(__VA_ARGS__); printf(ANSI_COLOR_RESET);
+	// #define DEBUG_PRINT(fmt, args...)    fprintf(ANSI_COLOR_RED,stderr, fmt,  ## args ,ANSI_COLOR_RESET)
+#else
+	#define Debug(fmt, args...)
+	#define Debug_R(fmt, args...)
+	#define Debug_Y(fmt, args...)
+#endif
 
 #ifdef __cplusplus
 }

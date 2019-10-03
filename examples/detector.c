@@ -5,6 +5,12 @@ static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,2
 
 void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
 {
+	Debug("datacfg: %s", datacfg);
+	Debug("cfgfile: %s", cfgfile);
+	Debug("weightfile: %s", weightfile);
+	Debug("ngpus: %d", ngpus);
+	
+	
     list *options = read_data_cfg(datacfg);
     char *train_images = option_find_str(options, "train", "data/train.list");
     char *backup_directory = option_find_str(options, "backup", "/backup/");
@@ -30,9 +36,12 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     network *net = nets[0];
 
     int imgs = net->batch * net->subdivisions * ngpus;
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+	Debug("net->subdivisions = %d",net->subdivisions);
+    printf(ANSI_COLOR_RED "Learning Rate: %g, Batch Size: %d, Max batch: %d, Momentum: %g, Decay: %g, LR policy: %d" ANSI_COLOR_RESET, net->learning_rate, net->batch, net->max_batches, net->momentum, net->decay, net->policy);
     data train, buffer;
-
+	
+	Debug("Chien debug net->n = %d", net->n);
+	
     layer l = net->layers[net->n - 1];
 
     int classes = l.classes;
@@ -40,7 +49,9 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
     list *plist = get_paths(train_images);
     //int N = plist->size;
+	Debug("plist->size: %d, Will train %.3f epochs", plist->size, (float)net->max_batches/(plist->size/net->batch));
     char **paths = (char **)list_to_array(plist);
+	//Debug("**paths: %s", *(paths+1));
 
     load_args args = get_base_args(net);
     args.coords = l.coords;
@@ -60,7 +71,8 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     int count = 0;
     //while(i*imgs < N*120){
     while(get_current_batch(net) < net->max_batches){
-        if(l.random && count++%10 == 0){
+        if(l.random && count++%10 == 0)
+		{
             printf("Resizing\n");
             int dim = (rand() % 10 + 10) * 32;
             if (get_current_batch(net)+200 > net->max_batches) dim = 608;
@@ -75,7 +87,8 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
             load_thread = load_data(args);
 
             #pragma omp parallel for
-            for(i = 0; i < ngpus; ++i){
+            for(i = 0; i < ngpus; ++i)
+			{
                 resize_network(nets[i], dim, dim);
             }
             net = nets[0];
@@ -109,7 +122,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
            }
          */
 
-        printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
+        // printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
 
         time=what_time_is_it_now();
         float loss = 0;
@@ -126,16 +139,16 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         avg_loss = avg_loss*.9 + loss*.1;
 
         i = get_current_batch(net);
-        printf("%ld: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, i*imgs);
-        if(i%100==0){
+        printf("\n\t\t \x1b[34m Current Batch: %ld, Loss: %f,avg: %f,LR: %f, %lf seconds, %d images \x1b[0m \n", get_current_batch(net), loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, i*imgs);
+        if(i%500==0){
 #ifdef GPU
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
             char buff[256];
-            sprintf(buff, "%s/%s.backup", backup_directory, base);
+            sprintf(buff, "%s/%s_%d.backup", backup_directory, base, i);
             save_weights(net, buff);
         }
-        if(i%10000==0 || (i < 1000 && i%100 == 0)){
+        else if(i%300==0 || (i < 1000 && i%100 == 0)){
 #ifdef GPU
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
 #endif
@@ -562,7 +575,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
 {
     list *options = read_data_cfg(datacfg);
-    char *name_list = option_find_str(options, "names", "data/names.list");
+    char *name_list = option_find_str(options, "names", "data/ChienNTT.names");
     char **names = get_labels(name_list);
 
     image **alphabet = load_alphabet();
@@ -800,6 +813,7 @@ void run_detector(int argc, char **argv)
     }
     char *gpu_list = find_char_arg(argc, argv, "-gpus", 0);
     char *outfile = find_char_arg(argc, argv, "-out", 0);
+	Debug("Chien debug output file: %s",outfile);
     int *gpus = 0;
     int gpu = 0;
     int ngpus = 0;

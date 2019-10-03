@@ -30,13 +30,13 @@ void average(int argc, char *argv[])
     network *net = parse_network_cfg(cfgfile);
     network *sum = parse_network_cfg(cfgfile);
 
-    char *weightfile = argv[4];   
+    char *weightfile = argv[4];
     load_weights(sum, weightfile);
 
     int i, j;
     int n = argc - 5;
     for(i = 0; i < n; ++i){
-        weightfile = argv[i+5];   
+        weightfile = argv[i+5];
         load_weights(net, weightfile);
         for(j = 0; j < net->n; ++j){
             layer l = net->layers[j];
@@ -434,7 +434,7 @@ int main(int argc, char **argv)
         char *filename = (argc > 4) ? argv[4]: 0;
         char *outfile = find_char_arg(argc, argv, "-out", 0);
         int fullscreen = find_arg(argc, argv, "-fullscreen");
-        test_detector("cfg/coco.data", argv[2], argv[3], filename, thresh, .5, outfile, fullscreen);
+        test_detector("cfg/car.data", argv[2], argv[3], filename, thresh, .5, outfile, fullscreen);
     } else if (0 == strcmp(argv[1], "cifar")){
         run_cifar(argc, argv);
     } else if (0 == strcmp(argv[1], "go")){
@@ -500,4 +500,3 @@ int main(int argc, char **argv)
     }
     return 0;
 }
-
