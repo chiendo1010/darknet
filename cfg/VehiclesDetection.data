@@ -1,0 +1,4 @@
+classes= 4
+train  = data/VehiclesDetection/MasterList.list
+names = data/VehiclesDetection.names
+backup = backup
