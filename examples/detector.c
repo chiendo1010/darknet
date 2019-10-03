@@ -49,7 +49,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
     list *plist = get_paths(train_images);
     //int N = plist->size;
-	Debug("plist->size: %d, Will train %.3f epochs", plist->size, (float)net->max_batches/(plist->size/net->batch));
+	Debug("plist->size: %d, Will train %.3f epochs", plist->size, (float)net->max_batches/(plist->size/(net->batch*net->subdivisions)));
     char **paths = (char **)list_to_array(plist);
 	//Debug("**paths: %s", *(paths+1));
 
