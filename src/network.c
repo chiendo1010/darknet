@@ -32,6 +32,8 @@
 #include "parser.h"
 #include "data.h"
 
+int IndexOfImage;
+
 load_args get_base_args(network *net)
 {
     load_args args = {0};
@@ -585,6 +587,63 @@ float *network_predict_image(network *net, image im)
     return p;
 }
 
+float *ptr_temp;
+size_t SizeOfImage;
+
+void Call_C_Side_Allocation(unsigned char NumberCamera, network *net)
+{
+	SizeOfImage = net->w * net->h * net->c;
+	set_batch_network(net, NumberCamera);
+	// printf("Chien debug C++ side. NumberCamera = %d \n", NumberCamera);
+	ptr_temp = (float*) malloc(NumberCamera * SizeOfImage *sizeof(float));	
+}
+
+void FreeMemory()
+{
+	if(ptr_temp != NULL)
+	{
+		Debug("Chien debug ------ FreeMemory ---- \n");
+		free(ptr_temp);
+	}
+}
+
+void CopyToPointerTemp(image *InputData, unsigned char i)
+{
+	// printf("Chien debug C++ side. i = %u, SizeOfImage = %d \n", i, SizeOfImage);
+	memcpy(ptr_temp + (SizeOfImage*i), InputData->data, SizeOfImage*sizeof(float));
+}
+
+void PassIndexCamera(int i)
+{
+	IndexOfImage = i;
+}
+
+void PredictMuliFrames(network *net)
+{
+	network_predict(net, ptr_temp);	
+}
+#ifdef DEBUG
+void Chien_print_trace (void)
+{
+  void *array[10];
+  size_t size;
+  char **strings;
+  size_t i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+
+  printf ("Obtained %zd stack frames.\n", size);
+
+  for (i = 0; i < size; i++)
+     printf ("%s\n", strings[i]);
+
+  free (strings);
+}
+#endif
+
+
+
 int network_width(network *net){return net->w;}
 int network_height(network *net){return net->h;}
 
@@ -594,16 +653,21 @@ matrix network_predict_data_multi(network *net, data test, int n)
     int k = net->outputs;
     matrix pred = make_matrix(test.X.rows, k);
     float *X = calloc(net->batch*test.X.rows, sizeof(float));
-    for(i = 0; i < test.X.rows; i += net->batch){
-        for(b = 0; b < net->batch; ++b){
+    for(i = 0; i < test.X.rows; i += net->batch)
+	{
+        for(b = 0; b < net->batch; ++b)
+		{
             if(i+b == test.X.rows) break;
             memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
-        for(m = 0; m < n; ++m){
+        for(m = 0; m < n; ++m)
+		{
             float *out = network_predict(net, X);
-            for(b = 0; b < net->batch; ++b){
+            for(b = 0; b < net->batch; ++b)
+			{
                 if(i+b == test.X.rows) break;
-                for(j = 0; j < k; ++j){
+                for(j = 0; j < k; ++j)
+				{
                     pred.vals[i+b][j] += out[j+b*k]/n;
                 }
             }

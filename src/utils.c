@@ -280,6 +280,9 @@ void malloc_error()
 
 void file_error(char *s)
 {
+	#ifdef DEBUG
+	Chien_print_trace();
+	#endif
     fprintf(stderr, "Couldn't open file: %s\n", s);
     exit(0);
 }

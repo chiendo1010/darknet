@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+extern int IndexOfImage;
+
 layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes)
 {
     int i;
@@ -278,7 +280,7 @@ int yolo_num_detections(layer l, float thresh)
     int count = 0;
     for (i = 0; i < l.w*l.h; ++i){
         for(n = 0; n < l.n; ++n){
-            int obj_index  = entry_index(l, 0, n*l.w*l.h + i, 4);
+				int obj_index  = entry_index(l, IndexOfImage, n*l.w*l.h + i, 4);
             if(l.output[obj_index] > thresh){
                 ++count;
             }
@@ -317,25 +319,25 @@ int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh,
 {
     int i,j,n;
     float *predictions = l.output;
-    if (l.batch == 2) avg_flipped_yolo(l);
+    // if (l.batch == 2) avg_flipped_yolo(l); //Chien.dotruong 05-07-2019 Rem. Because use this function for detecting multi images.
     int count = 0;
     for (i = 0; i < l.w*l.h; ++i){
         int row = i / l.w;
         int col = i % l.w;
         for(n = 0; n < l.n; ++n){
-            int obj_index  = entry_index(l, 0, n*l.w*l.h + i, 4);
-            float objectness = predictions[obj_index];
-            if(objectness <= thresh) continue;
-            int box_index  = entry_index(l, 0, n*l.w*l.h + i, 0);
-            dets[count].bbox = get_yolo_box(predictions, l.biases, l.mask[n], box_index, col, row, l.w, l.h, netw, neth, l.w*l.h);
-            dets[count].objectness = objectness;
-            dets[count].classes = l.classes;
-            for(j = 0; j < l.classes; ++j){
-                int class_index = entry_index(l, 0, n*l.w*l.h + i, 4 + 1 + j);
-                float prob = objectness*predictions[class_index];
-                dets[count].prob[j] = (prob > thresh) ? prob : 0;
-            }
-            ++count;
+				int obj_index  = entry_index(l, IndexOfImage, n*l.w*l.h + i, 4);
+				float objectness = predictions[obj_index];
+				if(objectness <= thresh) continue;
+				int box_index  = entry_index(l, IndexOfImage, n*l.w*l.h + i, 0);
+				dets[count].bbox = get_yolo_box(predictions, l.biases, l.mask[n], box_index, col, row, l.w, l.h, netw, neth, l.w*l.h);
+				dets[count].objectness = objectness;
+				dets[count].classes = l.classes;
+				for(j = 0; j < l.classes; ++j){
+					int class_index = entry_index(l, IndexOfImage, n*l.w*l.h + i, 4 + 1 + j);
+					float prob = objectness*predictions[class_index];
+					dets[count].prob[j] = (prob > thresh) ? prob : 0;
+				}
+				++count;
         }
     }
     correct_yolo_boxes(dets, count, w, h, netw, neth, relative);

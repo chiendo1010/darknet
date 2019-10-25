@@ -741,6 +741,7 @@ int is_network(section *s)
 
 network *parse_network_cfg(char *filename)
 {
+	Debug("Chien debug parse_network_cfg -- filename: %s \n", filename);
     list *sections = read_cfg(filename);
     node *n = sections->front;
     if(!n) error("Config file has no sections");
