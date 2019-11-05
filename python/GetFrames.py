@@ -8,8 +8,8 @@ import time
 
 
 
-VideosPath = '/mnt/DATA1/Data/VehiclesDetection/LayData_Lan_1/'
-DesPath = '/mnt/DATA1/Data/VehiclesDetection/Frame/'
+VideosPath = '/mnt/DATA_1/Data/VehiclesDetection/LayData_Lan_4/'
+DesPath = '/mnt/DATA_1/Data/VehiclesDetection/KHTN_3/JPEGImages/'
 
 if __name__ == "__main__":
     ListPaths = [f for f in glob.glob(VideosPath+"/*.MOV")]
@@ -34,7 +34,7 @@ if __name__ == "__main__":
                 break
             
             if(CurrentFrameCount % 60 == 0):
-                cv2.imwrite(DesPath +CurrentFileName +"_"+ str(SaveFilesCount).zfill(7) + ".jpg", frame)
+                cv2.imwrite(DesPath +CurrentFileName.split('.')[-1] +"_"+ str(SaveFilesCount).zfill(7) + ".jpg", frame)
                 SaveFilesCount += 1
                 print(str(CurrentFileName) + " -- SaveFilesCount: " + str(SaveFilesCount))
 
